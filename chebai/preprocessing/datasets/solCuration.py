@@ -30,7 +30,7 @@ class SolCuration(XYBaseDataModule):
 
     @property
     def label_number(self):
-        return 12
+        return 2
 
     @property
     def raw_file_names(self):
@@ -116,7 +116,11 @@ class SolCuration(XYBaseDataModule):
             reader = csv.DictReader(input_file)
             for row in reader:
                 smiles = row["smiles"]
-                labels = row["logS"]
+                test = float(row["logS"])
+                if test > -1:
+                    labels = [0,1]
+                else:
+                    labels = [1,0]
                 # dataset has no mol_id TODO
                 yield dict(features=smiles, labels=labels, ident=i) #, ident=row["mol_id"]
                 i += 1
