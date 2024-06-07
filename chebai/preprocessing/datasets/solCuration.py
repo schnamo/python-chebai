@@ -41,15 +41,12 @@ class SolCuration(XYBaseDataModule):
         return ["test.pt", "train.pt", "validation.pt"]
 
     def download(self):
-        with NamedTemporaryFile("rb") as gout:
             # start with downloading just one part of the dataset, later add the remaining ones
-            request.urlretrieve(
-                "https://github.com/Mengjintao/SolCuration/blob/master/cure/esol_cure.csv",
-                gout.name,
-            )
-            with gout.name as gfile:
-               with open(os.path.join(self.raw_dir, "solCuration.csv"), "wt") as fout:
-                   fout.write(gfile.read())
+        with request.urlopen(
+            "https://raw.githubusercontent.com/Mengjintao/SolCuration/master/cure/esol_cure.csv",
+        ) as src:
+            with open(os.path.join(self.raw_dir, "solCuration.csv"), "wb") as dst:
+                shutil.copyfileobj(src, dst)
 
     def setup_processed(self):
         print("Create splits")
