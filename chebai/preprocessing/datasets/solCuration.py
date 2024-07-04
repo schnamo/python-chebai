@@ -12,6 +12,7 @@ from sklearn.model_selection import GroupShuffleSplit, train_test_split
 import numpy as np
 import pysmiles
 import torch
+from sklearn.preprocessing import LabelBinarizer 
 
 from chebai.preprocessing import reader as dr
 from chebai.preprocessing.datasets.base import MergedDataset, XYBaseDataModule
@@ -111,19 +112,20 @@ class SolCuration(XYBaseDataModule):
             self.setup_processed()
 
     def _load_dict(self, input_file_path):
-        i = 0
+        smiles_l = []
+        labels_l = []
         with open(input_file_path, "r") as input_file:
             reader = csv.DictReader(input_file)
             for row in reader:
-                smiles = row["smiles"]
-                test = float(row["logS"])
-                if test > -1:
-                    labels = [0,1]
-                else:
-                    labels = [1,0]
+                smiles_l.append(row["smiles"])
+                labels_l.append(np.floor(float(row["logS"])))
+            # onehotencoding
+            label_binarizer = LabelBinarizer()
+            label_binarizer.fit(labels_l)
+            onehot_label_l = label_binarizer.transform(labels_l)
+            for i in range(0,len(smiles_l)):
                 # dataset has no mol_id TODO
-                yield dict(features=smiles, labels=labels, ident=i) #, ident=row["mol_id"]
-                i += 1
+                yield dict(features=smiles_l[i], labels=onehot_label_l[i], ident=i) #, ident=row["mol_id"]
 
 class SolubilityCuratedData(SolCuration):
     READER = dr.ChemDataReader
