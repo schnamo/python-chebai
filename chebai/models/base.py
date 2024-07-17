@@ -120,7 +120,8 @@ class ChebaiBaseNet(LightningModule):
         data = self._process_batch(batch, batch_idx)
         labels = data["labels"]
         model_output = self(data, **data.get("model_kwargs", dict()))
-        pr, tar = self._get_prediction_and_labels(data, labels, model_output)
+        # do I figure out here if solCuration and then set flag to 1? TODO
+        pr, tar = self._get_prediction_and_labels(data, labels, model_output, 1)
         d = dict(data=data, labels=labels, output=model_output, preds=pr)
         if log:
             if self.criterion is not None:

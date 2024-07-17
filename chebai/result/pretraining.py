@@ -41,8 +41,9 @@ def evaluate_model(logs_base_path, model_filename, data_module):
     for row in tqdm.tqdm(data_list):
         processable_data = model._process_batch(collate([row]), 0)
         model_output = model(processable_data, **processable_data["model_kwargs"])
+        # todo fix this
         preds, labels = model._get_prediction_and_labels(
-            processable_data, processable_data["labels"], model_output
+            processable_data, processable_data["labels"], model_output, 1
         )
         preds_list.append(preds)
         labels_list.append(labels)

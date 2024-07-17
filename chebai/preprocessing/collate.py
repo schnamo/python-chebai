@@ -56,6 +56,9 @@ class RaggedCollater(Collater):
     def process_label_rows(self, labels):
         return pad_sequence(
             [
+                # todo: fix!
+                # torch.tensor([row if row is not None else False])
+                # for row in labels
                 torch.tensor([v if v is not None else False for v in row])
                 for row in labels
             ],

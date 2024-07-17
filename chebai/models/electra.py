@@ -252,7 +252,7 @@ class Electra(ChebaiBaseNet):
             labels = labels.float()
         return model_output["logits"], labels, kwargs_copy
 
-    def _get_prediction_and_labels(self, data, labels, model_output):
+    def _get_prediction_and_labels(self, data, labels, model_output, model_type=0):
         """
         Get the predictions and labels from the model output. Applies a sigmoid to the model output.
 
@@ -270,7 +270,11 @@ class Electra(ChebaiBaseNet):
         if "non_null_labels" in loss_kwargs:
             n = loss_kwargs["non_null_labels"]
             d = d[n]
-        return torch.sigmoid(d), labels.int() if labels is not None else None
+        # todo: fix this
+        if model_type == 0:
+            return torch.sigmoid(d), labels.int() if labels is not None else None
+        else:
+            return d, labels if labels is not None else None
 
     def forward(self, data, **kwargs):
         """

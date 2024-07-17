@@ -31,7 +31,7 @@ class SolCuration(XYBaseDataModule):
 
     @property
     def label_number(self):
-        return 2
+        return 1
 
     @property
     def raw_file_names(self):
@@ -48,6 +48,15 @@ class SolCuration(XYBaseDataModule):
         ) as src:
             with open(os.path.join(self.raw_dir, "solCuration.csv"), "wb") as dst:
                 shutil.copyfileobj(src, dst)
+        # download and combine all the available curated datasets from xxx
+        # db_sol = ['aqsol','aqua','chembl','esol','kinect','ochem','phys']
+        # with open(os.path.join(self.raw_dir, "solCuration.csv"), "ab") as dst:
+        #     for i, db in enumerate(db_sol):
+        #         with request.urlopen(f"https://raw.githubusercontent.com/Mengjintao/SolCuration/master/cure/{db}_cure.csv",) as src:
+        #             if i > 0:
+        #                 src.readline()
+        #             shutil.copyfileobj(src, dst)
+             
 
     def setup_processed(self):
         print("Create splits")
@@ -118,14 +127,15 @@ class SolCuration(XYBaseDataModule):
             reader = csv.DictReader(input_file)
             for row in reader:
                 smiles_l.append(row["smiles"])
-                labels_l.append(np.floor(float(row["logS"])))
+                labels_l.append([float(row["logS"])])
+                # labels_l.append(np.floor(float(row["logS"])))
             # onehotencoding
-            label_binarizer = LabelBinarizer()
-            label_binarizer.fit(labels_l)
-            onehot_label_l = label_binarizer.transform(labels_l)
+            # label_binarizer = LabelBinarizer()
+            # label_binarizer.fit(labels_l)
+            # onehot_label_l = label_binarizer.transform(labels_l)
             for i in range(0,len(smiles_l)):
                 # dataset has no mol_id TODO
-                yield dict(features=smiles_l[i], labels=onehot_label_l[i], ident=i) #, ident=row["mol_id"]
+                yield dict(features=smiles_l[i], labels=labels_l[i], ident=i) #, ident=row["mol_id"]
 
 class SolubilityCuratedData(SolCuration):
     READER = dr.ChemDataReader
