@@ -51,7 +51,9 @@ class CustomTrainer(Trainer):
         )
         features = torch.cat((cls_tokens, x), dim=1)
         model_output = model({"features": features})
-        preds = torch.sigmoid(model_output["logits"])
+        # todo: adjust this later with flag
+        preds = model_output["logits"]
+        # preds = torch.sigmoid(model_output["logits"])
 
         print(preds.shape)
         return preds
