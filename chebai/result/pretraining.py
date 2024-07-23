@@ -43,7 +43,7 @@ def evaluate_model(logs_base_path, model_filename, data_module):
         model_output = model(processable_data, **processable_data["model_kwargs"])
         # todo fix this
         preds, labels = model._get_prediction_and_labels(
-            processable_data, processable_data["labels"], model_output, 1
+            processable_data, processable_data["labels"], model_output
         )
         preds_list.append(preds)
         labels_list.append(labels)

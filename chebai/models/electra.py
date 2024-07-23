@@ -198,7 +198,7 @@ class Electra(ChebaiBaseNet):
         return self.electra.electra
 
     def __init__(
-        self, config=None, pretrained_checkpoint=None, load_prefix=None, **kwargs
+        self, config=None, pretrained_checkpoint=None, load_prefix=None, model_type='classification',**kwargs
     ):
         # Remove this property in order to prevent it from being stored as a
         # hyper parameter
@@ -252,7 +252,7 @@ class Electra(ChebaiBaseNet):
             labels = labels.float()
         return model_output["logits"], labels, kwargs_copy
 
-    def _get_prediction_and_labels(self, data, labels, model_output, model_type=0):
+    def _get_prediction_and_labels(self, data, labels, model_output):
         """
         Get the predictions and labels from the model output. Applies a sigmoid to the model output.
 
@@ -271,10 +271,12 @@ class Electra(ChebaiBaseNet):
             n = loss_kwargs["non_null_labels"]
             d = d[n]
         # todo: fix this
-        if model_type == 0:
+        if self.model_type == 'classification':
             return torch.sigmoid(d), labels.int() if labels is not None else None
-        else:
+        elif self.model_type == 'regression':
             return d, labels if labels is not None else None
+        else:
+            raise ValueError('Please specify a valid model type in your model config.')
 
     def forward(self, data, **kwargs):
         """
