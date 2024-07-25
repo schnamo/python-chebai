@@ -49,7 +49,7 @@ class SolCuration(XYBaseDataModule):
         #     with open(os.path.join(self.raw_dir, "solCuration.csv"), "wb") as dst:
         #         shutil.copyfileobj(src, dst)
         # download and combine all the available curated datasets from xxx
-        db_sol = ['aqsol','aqua','chembl','esol','kinect','ochem','phys']
+        db_sol = ['aqsol','aqua','chembl','esol','ochem','phys']
         with open(os.path.join(self.raw_dir, "solCuration.csv"), "ab") as dst:
             for i, db in enumerate(db_sol):
                 with request.urlopen(f"https://raw.githubusercontent.com/Mengjintao/SolCuration/master/cure/{db}_cure.csv",) as src:
