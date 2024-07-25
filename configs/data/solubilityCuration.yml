@@ -1,3 +1,3 @@
 class_path: chebai.preprocessing.datasets.solCuration.SolubilityCuratedData
 init_args:
-  batch_size: 10
+  batch_size: 20

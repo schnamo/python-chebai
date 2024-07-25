@@ -198,7 +198,7 @@ class Electra(ChebaiBaseNet):
         return self.electra.electra
 
     def __init__(
-        self, config=None, pretrained_checkpoint=None, load_prefix=None, model_type='classification',**kwargs
+        self, config=None, pretrained_checkpoint=None, load_prefix=None, model_type='classification', **kwargs
     ):
         # Remove this property in order to prevent it from being stored as a
         # hyper parameter
@@ -210,6 +210,7 @@ class Electra(ChebaiBaseNet):
             config["num_labels"] = self.out_dim
         self.config = ElectraConfig(**config, output_attentions=True)
         self.word_dropout = nn.Dropout(config.get("word_dropout", 0))
+        self.model_type = model_type
 
         in_d = self.config.hidden_size
         self.output = nn.Sequential(
@@ -270,7 +271,6 @@ class Electra(ChebaiBaseNet):
         if "non_null_labels" in loss_kwargs:
             n = loss_kwargs["non_null_labels"]
             d = d[n]
-        # todo: fix this
         if self.model_type == 'classification':
             return torch.sigmoid(d), labels.int() if labels is not None else None
         elif self.model_type == 'regression':
