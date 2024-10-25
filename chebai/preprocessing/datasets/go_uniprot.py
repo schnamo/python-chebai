@@ -8,7 +8,12 @@
 # https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/docs/keywlist.txt
 # https://www.uniprot.org/uniprotkb
 
-__all__ = ["GOUniProtOver250", "GOUniProtOver50"]
+__all__ = [
+    "GOUniProtOver250",
+    "GOUniProtOver50",
+    "EXPERIMENTAL_EVIDENCE_CODES",
+    "AMBIGUOUS_AMINO_ACIDS",
+]
 
 import gzip
 import itertools

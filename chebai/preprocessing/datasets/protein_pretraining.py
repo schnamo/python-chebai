@@ -1,3 +1,5 @@
+__all__ = ["SwissProteinPretrain"]
+
 import os
 from abc import ABC
 from collections import OrderedDict
@@ -15,21 +17,20 @@ from chebai.preprocessing.datasets.go_uniprot import (
     EXPERIMENTAL_EVIDENCE_CODES,
     GOUniProtOver250,
 )
+from chebai.preprocessing.reader import ProteinDataReader
 
 
 class _ProteinPretrainingData(_DynamicDataset, ABC):
     _ID_IDX: int = 0
     _DATA_REPRESENTATION_IDX: int = 1  # here `sequence` column
 
-    def __init__(self, *args, **kwargs):
-        super(_ProteinPretrainingData).__init__(*args, **kwargs)
+    def __init__(self, **kwargs):
         self._go_extractor = GOUniProtOver250()
         assert self._go_extractor.go_branch == GOUniProtOver250._ALL_GO_BRANCHES
+        super(_ProteinPretrainingData, self).__init__(**kwargs)
 
     # ------------------------------ Phase: Prepare data -----------------------------------
-    def prepare_data(self):
-        print("Checking for processed data in", self.processed_dir_main)
-
+    def prepare_data(self, *args: Any, **kwargs: Any) -> None:
         processed_name = self.processed_dir_main_file_names_dict["data"]
         if not os.path.isfile(os.path.join(self.processed_dir_main, processed_name)):
             print("Missing processed data file (`data.pkl` file)")
@@ -73,7 +74,10 @@ class _ProteinPretrainingData(_DynamicDataset, ABC):
 
         swiss_data = SwissProt.parse(
             open(
-                os.path.join(self.raw_dir, self.raw_file_names_dict["SwissUniProt"]),
+                os.path.join(
+                    self._go_extractor.raw_dir,
+                    self._go_extractor.raw_file_names_dict["SwissUniProt"],
+                ),
                 "r",
             )
         )
@@ -195,3 +199,17 @@ class _ProteinPretrainingData(_DynamicDataset, ABC):
     @property
     def base_dir(self) -> str:
         return os.path.join(self._go_extractor.base_dir, "Pretraining")
+
+    @property
+    def raw_dir(self) -> str:
+        """Name of the directory where the raw data is stored."""
+        return self._go_extractor.raw_dir
+
+
+class SwissProteinPretrain(_ProteinPretrainingData):
+
+    READER = ProteinDataReader
+
+    @property
+    def _name(self) -> str:
+        return "SwissProteinPretrain"
