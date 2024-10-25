@@ -21,16 +21,37 @@ from chebai.preprocessing.reader import ProteinPretrainReader
 
 
 class _ProteinPretrainingData(_DynamicDataset, ABC):
+    """
+    Data module for pretraining protein sequences, specifically designed for Swiss-UniProt data. It includes methods for
+    data preparation, loading, and dynamic splitting of protein sequences.
+    The data is parsed and filtered to only select proteins with no associated `valid` Gene Ontology (GO) labels.
+    A valid GO label is the one which has one of evidence codes defined in `EXPERIMENTAL_EVIDENCE_CODES`.
+    """
+
     _ID_IDX: int = 0
-    _DATA_REPRESENTATION_IDX: int = 1  # here `sequence` column
+    _DATA_REPRESENTATION_IDX: int = 1  # Index of `sequence` column
 
     def __init__(self, **kwargs):
-        self._go_extractor = GOUniProtOver250()
-        assert self._go_extractor.go_branch == GOUniProtOver250._ALL_GO_BRANCHES
+        """
+        Initializes the data module with any GOUniProt extractor class object.
+
+        Args:
+            **kwargs: Additional arguments for the superclass initialization.
+        """
+        self._go_uniprot_extractor = GOUniProtOver250()
+        assert self._go_uniprot_extractor.go_branch == GOUniProtOver250._ALL_GO_BRANCHES
         super(_ProteinPretrainingData, self).__init__(**kwargs)
 
     # ------------------------------ Phase: Prepare data -----------------------------------
     def prepare_data(self, *args: Any, **kwargs: Any) -> None:
+        """
+        Prepares the data by downloading and parsing Swiss-Prot data if not already available. Saves the processed data
+        for further use.
+
+        Args:
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+        """
         processed_name = self.processed_dir_main_file_names_dict["data"]
         if not os.path.isfile(os.path.join(self.processed_dir_main, processed_name)):
             print("Missing processed data file (`data.pkl` file)")
@@ -40,20 +61,29 @@ class _ProteinPretrainingData(_DynamicDataset, ABC):
             self.save_processed(protein_df, processed_name)
 
     def _extract_class_hierarchy(self, data_path: str) -> nx.DiGraph:
+        # method not required as no Swiss-UniProt has no ontological data
         pass
 
     def _graph_to_raw_dataset(self, graph: nx.DiGraph) -> pd.DataFrame:
+        # method not required as no Swiss-UniProt has no ontological data
         pass
 
     def select_classes(self, g: nx.DiGraph, *args, **kwargs) -> List:
+        # method not required as no Swiss-UniProt has no ontological data
         pass
 
     def _download_required_data(self) -> str:
-        return self._go_extractor._download_swiss_uni_prot_data()
+        """
+        Downloads the required Swiss-Prot data using the GOUniProt extractor class.
+
+        Returns:
+            str: Path to the downloaded data.
+        """
+        return self._go_uniprot_extractor._download_swiss_uni_prot_data()
 
     def _parse_protein_data_for_pretraining(self) -> pd.DataFrame:
         """
-        Parses the Swiss-Prot data and returns a DataFrame mapping Swiss-Prot records which does not have any valid
+        Parses the Swiss-Prot data and returns a DataFrame containing Swiss-Prot proteins which does not have any valid
         Gene Ontology(GO) label. A valid GO label is the one which has one of the following evidence code
         (EXP, IDA, IPI, IMP, IGI, IEP, TAS, IC).
 
@@ -65,9 +95,8 @@ class _ProteinPretrainingData(_DynamicDataset, ABC):
             We ignore proteins with ambiguous amino acid codes (B, O, J, U, X, Z) in their sequence.`
 
         Returns:
-            pd.DataFrame: A DataFrame where each row corresponds to a Swiss-Prot record with its associated GO data.
+            pd.DataFrame: A DataFrame where each row corresponds to a Swiss-Prot record with not associated valid GO.
         """
-
         print("Parsing swiss uniprot raw data....")
 
         swiss_ids, sequences = [], []
@@ -75,8 +104,8 @@ class _ProteinPretrainingData(_DynamicDataset, ABC):
         swiss_data = SwissProt.parse(
             open(
                 os.path.join(
-                    self._go_extractor.raw_dir,
-                    self._go_extractor.raw_file_names_dict["SwissUniProt"],
+                    self._go_uniprot_extractor.raw_dir,
+                    self._go_uniprot_extractor.raw_file_names_dict["SwissUniProt"],
                 ),
                 "r",
             )
@@ -88,7 +117,7 @@ class _ProteinPretrainingData(_DynamicDataset, ABC):
                 continue
 
             if not record.sequence:
-                # Consider protein with only sequence representation and seq. length not greater than max seq. length
+                # Consider protein with only sequence representation
                 continue
 
             if any(aa in AMBIGUOUS_AMINO_ACIDS for aa in record.sequence):
@@ -97,7 +126,7 @@ class _ProteinPretrainingData(_DynamicDataset, ABC):
 
             has_valid_associated_go_label = False
             for cross_ref in record.cross_references:
-                if cross_ref[0] == self._go_extractor._GO_DATA_INIT:
+                if cross_ref[0] == self._go_uniprot_extractor._GO_DATA_INIT:
 
                     if len(cross_ref) <= 3:
                         # No evidence code
@@ -146,8 +175,6 @@ class _ProteinPretrainingData(_DynamicDataset, ABC):
         with open(input_file_path, "rb") as input_file:
             df = pd.read_pickle(input_file)
             for row in df.values:
-                # chebai.preprocessing.reader.DataReader only needs features, labels, ident, group
-                # "group" set to None, by default as no such entity for this data
                 yield dict(
                     features=row[self._DATA_REPRESENTATION_IDX],
                     ident=row[self._ID_IDX],
@@ -184,13 +211,16 @@ class _ProteinPretrainingData(_DynamicDataset, ABC):
 
         df_go_data = pd.DataFrame(data_go)
         train_df_go, df_test = train_test_split(
-            df_go_data, seed=self.dynamic_data_split_seed
+            df_go_data,
+            train_size=self.train_split,
+            random_state=self.dynamic_data_split_seed,
         )
 
         # Get all splits
         df_train, df_val = train_test_split(
             train_df_go,
-            seed=self.dynamic_data_split_seed,
+            train_size=self.train_split,
+            random_state=self.dynamic_data_split_seed,
         )
 
         return df_train, df_val, df_test
@@ -198,18 +228,34 @@ class _ProteinPretrainingData(_DynamicDataset, ABC):
     # ------------------------------ Phase: Raw Properties -----------------------------------
     @property
     def base_dir(self) -> str:
-        return os.path.join(self._go_extractor.base_dir, "Pretraining")
+        """
+        str: The base directory for pretraining data storage.
+        """
+        return os.path.join(self._go_uniprot_extractor.base_dir, "Pretraining")
 
     @property
     def raw_dir(self) -> str:
         """Name of the directory where the raw data is stored."""
-        return self._go_extractor.raw_dir
+        return self._go_uniprot_extractor.raw_dir
 
 
 class SwissProteinPretrain(_ProteinPretrainingData):
+    """
+    Data module for Swiss-Prot protein pretraining, inheriting from `_ProteinPretrainingData`.
+    This class is specifically designed to handle data processing and loading for Swiss-Prot-based protein datasets.
+
+    Attributes:
+        READER (Type): The data reader class used to load and process protein pretraining data.
+    """
 
     READER = ProteinPretrainReader
 
     @property
     def _name(self) -> str:
+        """
+        The name identifier for this data module.
+
+        Returns:
+            str: A string identifier, "SwissProteinPretrain", representing the name of this data module.
+        """
         return "SwissProteinPretrain"
