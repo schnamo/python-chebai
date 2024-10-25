@@ -469,20 +469,3 @@ class ProteinDataReader(DataReader):
             print(f"Saving {len(self.cache)} tokens to {self.token_path}...")
             print(f"First 10 tokens: {self.cache[:10]}")
             pk.writelines([f"{c}\n" for c in self.cache])
-
-
-class ProteinPretrainReader(ProteinDataReader):
-    def _read_components(self, row: Dict[str, Any]) -> Dict[str, Any]:
-        """Read and return components from the row."""
-        return dict(
-            features=self._get_raw_data(row),
-            ident=self._get_raw_id(row),
-        )
-
-    def to_data(self, row: Dict[str, Any]) -> Dict[str, Any]:
-        """Convert raw row data to processed data."""
-        d = self._read_components(row)
-        return dict(
-            features=self._read_data(d["features"]),
-            ident=self._read_id(d["ident"]),
-        )
