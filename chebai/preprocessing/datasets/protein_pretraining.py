@@ -171,6 +171,7 @@ class _ProteinPretrainingData(_DynamicDataset, ABC):
             Dict[str, Any]: A dictionary containing:
                 - `features` (str): The sequence data from the file.
                 - `ident` (Any): The identifier from row index 0.
+                - `labels`: Set to None
         """
         with open(input_file_path, "rb") as input_file:
             df = pd.read_pickle(input_file)
@@ -178,6 +179,7 @@ class _ProteinPretrainingData(_DynamicDataset, ABC):
                 yield dict(
                     features=row[self._DATA_REPRESENTATION_IDX],
                     ident=row[self._ID_IDX],
+                    labels=None,
                 )
 
     # ------------------------------ Phase: Dynamic Splits -----------------------------------
