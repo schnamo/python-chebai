@@ -17,7 +17,7 @@ from chebai.preprocessing.datasets.go_uniprot import (
     EXPERIMENTAL_EVIDENCE_CODES,
     GOUniProtOver250,
 )
-from chebai.preprocessing.reader import ProteinDataReader
+from chebai.preprocessing.reader import ProteinPretrainReader
 
 
 class _ProteinPretrainingData(_DynamicDataset, ABC):
@@ -208,7 +208,7 @@ class _ProteinPretrainingData(_DynamicDataset, ABC):
 
 class SwissProteinPretrain(_ProteinPretrainingData):
 
-    READER = ProteinDataReader
+    READER = ProteinPretrainReader
 
     @property
     def _name(self) -> str:
