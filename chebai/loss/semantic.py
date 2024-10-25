@@ -12,25 +12,6 @@ from chebai.preprocessing.datasets.chebi import ChEBIOver100, _ChEBIDataExtracto
 from chebai.preprocessing.datasets.pubchem import LabeledUnlabeledMixed
 
 
-def _filter_by_ground_truth(individual_loss, target, filter_l, filter_r):
-    # mask of ground truth labels for implications, shape (batch_size, num_implications/num_disjointnesses)
-    target_l = target[:, filter_l]
-    target_r = target[:, filter_r]
-
-    # filter individual loss: for an implication A->B, only apply loss to A if A is labeled false,
-    # only apply loss to B if B is labeled true
-    applicable_individual_loss_l = individual_loss * (1 - target_l)
-    applicable_individual_loss_r = individual_loss * target_r
-    class_loss = torch.zeros(target.shape, device=target.device)
-    # for each class, sum up the losses for all implication antecedents and consequents
-    for cls in range(class_loss.shape[1]):
-        class_loss[:, cls] = applicable_individual_loss_l[:, filter_l == cls].sum(dim=1)
-        class_loss[:, cls] += applicable_individual_loss_r[:, filter_r == cls].sum(
-            dim=1
-        )
-    return class_loss
-
-
 class ImplicationLoss(torch.nn.Module):
     """
     Implication Loss module.

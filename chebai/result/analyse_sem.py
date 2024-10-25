@@ -236,6 +236,15 @@ class PredictionSmoother:
         return preds
 
 
+def _filter_to_dense(filter):
+    filter_dense = []
+    for i in range(filter.shape[0]):
+        for j in range(filter.shape[1]):
+            if filter[i, j] > 0:
+                filter_dense.append([i, j])
+    return torch.tensor(filter_dense)
+
+
 def build_prediction_filter(data_module_labeled=None):
     if data_module_labeled is None:
         data_module_labeled = ChEBIOver100(chebi_version=231)
@@ -245,9 +254,12 @@ def build_prediction_filter(data_module_labeled=None):
         path_to_disjointness=os.path.join("data", "disjoint.csv"),
         data_extractor=data_module_labeled,
     )
+    impl = _filter_to_dense(dl.implication_filter_l)
+    disj = _filter_to_dense(dl.disjoint_filter_l)
+
     return [
-        (dl.implication_filter_l, dl.implication_filter_r, "impl"),
-        (dl.disjoint_filter_l, dl.disjoint_filter_r, "disj"),
+        (impl[:, 0], impl[:, 1], "impl"),
+        (disj[:, 0], disj[:, 1], "disj"),
     ]
 
 
@@ -595,9 +607,7 @@ def run_all(
             else:
                 ckpt_path = None
                 for file in os.listdir(os.path.join(ckpt_dir, run_name)):
-                    if file.startswith(f"best_epoch={epoch}_") or file.startswith(
-                        f"per_epoch={epoch}_"
-                    ):
+                    if f"epoch={epoch}_" in file or f"epoch={epoch}." in file:
                         ckpt_path = os.path.join(os.path.join(ckpt_dir, run_name, file))
                 assert (
                     ckpt_path is not None
@@ -632,10 +642,10 @@ def run_all(
                 # identity function if remove_violations is False
                 smooth_preds(preds)
 
-                details_path = os.path.join(
-                    results_dir,
-                    f"{run_name}_ep{epoch}_{dataset.__class__.__name__}_{dataset_key}",
-                )
+                details_path = None  # os.path.join(
+                #    results_dir,
+                #    f"{run_name}_ep{epoch}_{dataset.__class__.__name__}_{dataset_key}",
+                # )
                 metrics_dict = run_consistency_metrics(
                     preds,
                     prediction_filters,
@@ -694,10 +704,10 @@ def run_fuzzy_loss(tag="fuzzy_loss", skip_first_n=0):
         check_consistency_on=chebi100,
         prediction_datasets=[
             (chebi100, "test"),
-            (pubchem_kmeans, "cluster1_cutoff2k.pt"),
-            (pubchem_kmeans, "cluster2.pt"),
-            (pubchem_kmeans, "ten_from_each_cluster.pt"),
-            (pubchem_kmeans, "chebi_close.pt"),
+            # (pubchem_kmeans, "cluster1_cutoff2k.pt"),
+            # (pubchem_kmeans, "cluster2.pt"),
+            # (pubchem_kmeans, "ten_from_each_cluster.pt"),
+            # (pubchem_kmeans, "chebi_close.pt"),
         ],
     )
 
