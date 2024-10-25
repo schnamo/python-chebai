@@ -52,6 +52,8 @@ class ImplicationLoss(torch.nn.Module):
             "g",
             "reverse-goedel",
             "rg",
+            "binary",
+            "b",
         ] = "reichenbach",
         impl_loss_weight: float = 0.1,
         pos_scalar: Union[int, float] = 1,
@@ -249,6 +251,8 @@ class ImplicationLoss(torch.nn.Module):
             individual_loss = torch.where(l <= r, 0, one_min_r)
         elif self.fuzzy_implication in ["reverse-goedel", "rg"]:
             individual_loss = torch.where(l <= r, 0, l)
+        elif self.fuzzy_implication in ["binary", "b"]:
+            individual_loss = torch.where(l <= r, 0, 1)
         else:
             raise NotImplementedError(
                 f"Unknown fuzzy implication {self.fuzzy_implication}"
@@ -454,18 +458,16 @@ def _build_disjointness_filter(
 
 
 if __name__ == "__main__":
-    loss_with_base = DisjointLoss(
+    loss = DisjointLoss(
         os.path.join("data", "disjoint.csv"),
         ChEBIOver100(chebi_version=231),
-        base_loss=BCEWeighted(beta=0.99),
+        base_loss=BCEWeighted(),
     )
-    lb = loss_with_base(torch.randn(10, 997), torch.randint(0, 2, (10, 997)))
-    print(lb)
-    loss_max = DisjointLoss(
-        os.path.join("data", "disjoint.csv"),
-        ChEBIOver100(chebi_version=231),
-        base_loss=BCEWeighted(beta=0.99),
-        violations_per_cls_aggregator="max",
-    )
-    lm = loss_max(torch.randn(10, 997), torch.randint(0, 2, (10, 997)))
+    lm = loss(torch.randn(10, 997), torch.randint(0, 2, (10, 997)))
+
     print(lm)
+    loss.disjoint_filter_l = torch.tensor(
+        [[0, 1, 1, 0], [0, 0, 1, 0], [0, 0, 0, 0], [0, 0, 1, 0]]
+    )
+    loss.disjoint_filter_r = loss.disjoint_filter_l.transpose(0, 1)
+    # todo
