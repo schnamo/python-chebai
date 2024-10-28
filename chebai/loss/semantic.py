@@ -101,7 +101,14 @@ class ImplicationLoss(torch.nn.Module):
         self.violations_per_cls_aggregator = violations_per_cls_aggregator
 
     def _calculate_unaggregated_fuzzy_loss(
-        self, pred, target: torch.Tensor, weight, filter_l, filter_r, **kwargs
+        self,
+        pred,
+        target: torch.Tensor,
+        weight,
+        filter_l,
+        filter_r,
+        mode="impl",
+        **kwargs,
     ):
         # for each batch, get all pairwise losses: [a1, a2, a3] -> [[a1*a1, a1*a2, a1*a3],[a2*a1,...],[a3*a1,...]]
         preds_expanded1 = pred.unsqueeze(1).expand(-1, pred.shape[1], -1)
@@ -111,22 +118,25 @@ class ImplicationLoss(torch.nn.Module):
         label_filter = target.unsqueeze(2).expand(-1, -1, pred.shape[1])
         filter_l = filter_l.to(pred.device).unsqueeze(0).expand(pred.shape[0], -1, -1)
         filter_r = filter_r.to(pred.device).unsqueeze(0).expand(pred.shape[0], -1, -1)
-
-        loss_impl_l = (
-            self._calculate_implication_loss(preds_expanded2, preds_expanded1, target)
-            * filter_l
-            * (1 - label_filter)
-        )
-        loss_impl_r = (
-            self._calculate_implication_loss(preds_expanded1, preds_expanded2, target)
-            * filter_r
-            * label_filter
-        )
+        if mode == "impl":
+            all_implications = self._calculate_implication_loss(
+                preds_expanded2, preds_expanded1
+            )
+        else:
+            all_implications = self._calculate_implication_loss(
+                preds_expanded2, 1 - preds_expanded1
+            )
+        loss_impl_l = all_implications * filter_l * (1 - label_filter)
+        if mode == "impl":
+            loss_impl_r = all_implications.transpose(1, 2) * filter_r * label_filter
+            loss_impl_sum = loss_impl_l + loss_impl_r
+        else:
+            loss_impl_sum = loss_impl_l
 
         if self.violations_per_cls_aggregator == "sum":
-            loss_by_cls = (loss_impl_l + loss_impl_r).sum(dim=-1)
+            loss_by_cls = (loss_impl_sum).sum(dim=-1)
         else:
-            loss_by_cls = torch.max(loss_impl_l + loss_impl_r, dim=-1).values
+            loss_by_cls = torch.max(loss_impl_sum, dim=-1).values
 
         unweighted_mean = loss_by_cls.mean()
         implication_loss_weighted = loss_by_cls
@@ -198,7 +208,7 @@ class ImplicationLoss(torch.nn.Module):
         return total_loss.mean(), loss_components
 
     def _calculate_implication_loss(
-        self, l: torch.Tensor, r: torch.Tensor, target: torch.Tensor
+        self, l: torch.Tensor, r: torch.Tensor
     ) -> torch.Tensor:
         """
         Calculate implication loss based on T-norm and other parameters.
@@ -252,7 +262,7 @@ class ImplicationLoss(torch.nn.Module):
         elif self.fuzzy_implication in ["reverse-goedel", "rg"]:
             individual_loss = torch.where(l <= r, 0, l)
         elif self.fuzzy_implication in ["binary", "b"]:
-            individual_loss = torch.where(l <= r, 0, 1)
+            individual_loss = torch.where(l <= r, 0, 1).to(dtype=l.dtype)
         else:
             raise NotImplementedError(
                 f"Unknown fuzzy implication {self.fuzzy_implication}"
@@ -336,7 +346,7 @@ class DisjointLoss(ImplicationLoss):
         if "current_epoch" in kwargs and self.start_at_epoch > kwargs["current_epoch"]:
             return base_loss.mean(), loss_components
 
-        pred = torch.sigmoid(input)
+        pred = input  # torch.sigmoid(input)
         impl_loss, unweighted_impl_mean, weighted_impl_mean = (
             self._calculate_unaggregated_fuzzy_loss(
                 pred,
@@ -357,6 +367,7 @@ class DisjointLoss(ImplicationLoss):
                 self.disjoint_weight,
                 self.disjoint_filter_l,
                 self.disjoint_filter_r,
+                mode="disj",
                 **kwargs,
             )
         )
@@ -462,12 +473,22 @@ if __name__ == "__main__":
         os.path.join("data", "disjoint.csv"),
         ChEBIOver100(chebi_version=231),
         base_loss=BCEWeighted(),
+        impl_loss_weight=1,
+        disjoint_loss_weight=1,
     )
-    lm = loss(torch.randn(10, 997), torch.randint(0, 2, (10, 997)))
-
-    print(lm)
-    loss.disjoint_filter_l = torch.tensor(
+    # lm = loss(torch.randn(10, 997), torch.randint(0, 2, (10, 997)))
+    # print(lm)
+    loss.implication_filter_l = torch.tensor(
         [[0, 1, 1, 0], [0, 0, 1, 0], [0, 0, 0, 0], [0, 0, 1, 0]]
     )
+    loss.implication_filter_r = loss.implication_filter_l.transpose(0, 1)
+    loss.disjoint_filter_l = torch.tensor(
+        [[0, 0, 0, 0], [0, 0, 0, 1], [0, 0, 0, 0], [0, 1, 0, 0]]
+    )
     loss.disjoint_filter_r = loss.disjoint_filter_l.transpose(0, 1)
+    preds = torch.tensor([[0.1, 0.3, 0.7, 0.4], [0.5, 0.2, 0.9, 0.1]])
+    labels = [[0, 1, 1, 0], [0, 0, 1, 1]]
+    lm = loss(preds, torch.tensor(labels))
+    print(lm)
+    print()
     # todo
