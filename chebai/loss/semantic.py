@@ -346,7 +346,7 @@ class DisjointLoss(ImplicationLoss):
         if "current_epoch" in kwargs and self.start_at_epoch > kwargs["current_epoch"]:
             return base_loss.mean(), loss_components
 
-        pred = input  # torch.sigmoid(input)
+        pred = torch.sigmoid(input)
         impl_loss, unweighted_impl_mean, weighted_impl_mean = (
             self._calculate_unaggregated_fuzzy_loss(
                 pred,
