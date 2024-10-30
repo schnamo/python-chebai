@@ -40,7 +40,19 @@ class _ProteinPretrainingData(_DynamicDataset, ABC):
         """
         self._go_uniprot_extractor = GOUniProtOver250()
         assert self._go_uniprot_extractor.go_branch == GOUniProtOver250._ALL_GO_BRANCHES
+
+        self.max_sequence_length: int = int(kwargs.get("max_sequence_length", 1002))
+        assert (
+            self.max_sequence_length >= 1
+        ), "Max sequence length should be greater than or equal to 1."
+
         super(_ProteinPretrainingData, self).__init__(**kwargs)
+
+        if self.reader.n_gram is not None:
+            assert self.max_sequence_length >= self.reader.n_gram, (
+                f"max_sequence_length ({self.max_sequence_length}) must be greater than "
+                f"or equal to n_gram ({self.reader.n_gram})."
+            )
 
     # ------------------------------ Phase: Prepare data -----------------------------------
     def prepare_data(self, *args: Any, **kwargs: Any) -> None:
@@ -118,6 +130,10 @@ class _ProteinPretrainingData(_DynamicDataset, ABC):
 
             if not record.sequence:
                 # Consider protein with only sequence representation
+                continue
+
+            if len(record.sequence) > self.max_sequence_length:
+                # Consider protein with only sequence length not greater than max seq. length
                 continue
 
             if any(aa in AMBIGUOUS_AMINO_ACIDS for aa in record.sequence):
@@ -260,4 +276,4 @@ class SwissProteinPretrain(_ProteinPretrainingData):
         Returns:
             str: A string identifier, "SwissProteinPretrain", representing the name of this data module.
         """
-        return "SwissProteinPretrain"
+        return f"Swiss_{self.max_sequence_length}"
