@@ -8,7 +8,12 @@
 # https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/docs/keywlist.txt
 # https://www.uniprot.org/uniprotkb
 
-__all__ = ["GOUniProtOver250", "GOUniProtOver50"]
+__all__ = [
+    "GOUniProtOver250",
+    "GOUniProtOver50",
+    "EXPERIMENTAL_EVIDENCE_CODES",
+    "AMBIGUOUS_AMINO_ACIDS",
+]
 
 import gzip
 import itertools
@@ -25,10 +30,23 @@ import pandas as pd
 import requests
 import torch
 from Bio import SwissProt
-from torch.utils.data import DataLoader
 
 from chebai.preprocessing import reader as dr
 from chebai.preprocessing.datasets.base import _DynamicDataset
+
+EXPERIMENTAL_EVIDENCE_CODES = {
+    "EXP",
+    "IDA",
+    "IPI",
+    "IMP",
+    "IGI",
+    "IEP",
+    "TAS",
+    "IC",
+}
+
+# https://github.com/bio-ontology-research-group/deepgo/blob/d97447a05c108127fee97982fd2c57929b2cf7eb/aaindex.py#L8
+AMBIGUOUS_AMINO_ACIDS = {"B", "O", "J", "U", "X", "Z", "*"}
 
 
 class _GOUniProtDataExtractor(_DynamicDataset, ABC):
@@ -343,13 +361,15 @@ class _GOUniProtDataExtractor(_DynamicDataset, ABC):
         data_df = self._get_swiss_to_go_mapping()
         # add ancestors to go ids
         data_df["go_ids"] = data_df["go_ids"].apply(
-            lambda go_ids: list(
-                itertools.chain.from_iterable(
-                    [
-                        [go_id] + list(g.predecessors(go_id))
-                        for go_id in go_ids
-                        if go_id in g.nodes
-                    ]
+            lambda go_ids: sorted(
+                set(
+                    itertools.chain.from_iterable(
+                        [
+                            [go_id] + list(g.predecessors(go_id))
+                            for go_id in go_ids
+                            if go_id in g.nodes
+                        ]
+                    )
                 )
             )
         )
@@ -409,19 +429,6 @@ class _GOUniProtDataExtractor(_DynamicDataset, ABC):
                 "r",
             )
         )
-
-        EXPERIMENTAL_EVIDENCE_CODES = {
-            "EXP",
-            "IDA",
-            "IPI",
-            "IMP",
-            "IGI",
-            "IEP",
-            "TAS",
-            "IC",
-        }
-        # https://github.com/bio-ontology-research-group/deepgo/blob/d97447a05c108127fee97982fd2c57929b2cf7eb/aaindex.py#L8
-        AMBIGUOUS_AMINO_ACIDS = {"B", "O", "J", "U", "X", "Z", "*"}
 
         for record in swiss_data:
             if record.data_class != "Reviewed":
