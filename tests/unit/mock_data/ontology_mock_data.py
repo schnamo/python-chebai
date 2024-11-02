@@ -751,19 +751,19 @@ class GOUniProtMockData(MockOntologyGraphData):
             "SQ   SEQUENCE   60 AA;  29735 MW;  B4840739BF7D4121 CRC64;\n"
             "     XAFSAEDVLK EYDRRRRMEA LLLSLYYPND RKLLDYKEWS PPRVQVECPK APVEWNNPPS\n"
             "//\n"
-            # Below protein with a `valid` associated GO class but without sequence string 
+            # Below protein with a `valid` associated GO class but without sequence string
             "ID   Swiss_Prot_10              Reviewed;         60 AA.\n"
             "AC   Q6GZX4;\n"
             "DR   GO; GO:0000027; P:regulation of viral transcription; EXP:InterPro.\n"
             "SQ   SEQUENCE   60 AA;  29735 MW;  B4840739BF7D4121 CRC64;\n"
-            "     \n"  
+            "     \n"
             "//\n"
-            # Below protein with a `Invalid` associated GO class but without sequence string 
+            # Below protein with a `Invalid` associated GO class but without sequence string
             "ID   Swiss_Prot_11              Reviewed;         60 AA.\n"
             "AC   Q6GZX4;\n"
             "DR   GO; GO:0000028; P:regulation of viral transcription; ND:NoData.\n"
             "SQ   SEQUENCE   60 AA;  29735 MW;  B4840739BF7D4121 CRC64;\n"
-            "     \n"  
+            "     \n"
             "//\n"
         )
 

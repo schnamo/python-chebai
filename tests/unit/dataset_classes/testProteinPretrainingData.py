@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import PropertyMock, mock_open, patch
+
 from chebai.preprocessing.datasets.protein_pretraining import _ProteinPretrainingData
 from chebai.preprocessing.reader import ProteinDataReader
 from tests.unit.mock_data.ontology_mock_data import GOUniProtMockData
@@ -41,7 +42,9 @@ class TestProteinPretrainingData(unittest.TestCase):
         new_callable=mock_open,
         read_data=GOUniProtMockData.get_UniProt_raw_data(),
     )
-    def test_parse_protein_data_for_pretraining(self, mock_open_file: mock_open) -> None:
+    def test_parse_protein_data_for_pretraining(
+        self, mock_open_file: mock_open
+    ) -> None:
         """
         Tests the _parse_protein_data_for_pretraining method.
 
@@ -55,15 +58,15 @@ class TestProteinPretrainingData(unittest.TestCase):
 
         # Assert that all expected Swiss-Prot IDs are present in the DataFrame
         self.assertEqual(
-            set(pretrain_df['swiss_id']),
+            set(pretrain_df["swiss_id"]),
             set(list_of_pretrain_swiss_ids),
-            msg="The parsed DataFrame does not contain the expected Swiss-Prot IDs for pretraining."
+            msg="The parsed DataFrame does not contain the expected Swiss-Prot IDs for pretraining.",
         )
 
         # Assert that all sequences are not empty
         self.assertTrue(
-            pretrain_df['sequence'].str.len().gt(0).all(),
-            msg="Some protein sequences in the pretraining DataFrame are empty."
+            pretrain_df["sequence"].str.len().gt(0).all(),
+            msg="Some protein sequences in the pretraining DataFrame are empty.",
         )
 
 
