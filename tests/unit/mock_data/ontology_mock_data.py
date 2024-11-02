@@ -633,16 +633,43 @@ class GOUniProtMockData(MockOntologyGraphData):
         }
 
     @staticmethod
+    def proteins_for_pretraining() -> List[str]:
+        """
+        Returns a list of protein IDs which will be used for pretraining based on mock UniProt data.
+
+        Proteins include those with:
+        - No GO classes or invalid GO classes (missing required evidence codes).
+
+        Returns:
+            List[str]: A list of protein IDs that do not meet validation criteria.
+        """
+        return [
+            "Swiss_Prot_5",  # No GO classes associated
+            "Swiss_Prot_6",  # GO class with no evidence code
+            "Swiss_Prot_7",  # GO class with invalid evidence code
+        ]
+
+    @staticmethod
     def get_UniProt_raw_data() -> str:
         """
         Get raw data in string format for UniProt proteins.
 
-        This mock data contains six Swiss-Prot proteins with different properties:
-        - Swiss_Prot_1 and Swiss_Prot_2 are valid proteins.
-        - Swiss_Prot_3 has a sequence length greater than 1002.
-        - Swiss_Prot_4 contains "X", a non-valid amino acid in its sequence.
-        - Swiss_Prot_5 has no GO IDs mapped to it.
-        - Swiss_Prot_6 has GO IDs mapped, but no evidence codes.
+        This mock data contains eleven Swiss-Prot proteins with different properties:
+        - **Swiss_Prot_1**: A valid protein with three valid GO classes and one invalid GO class.
+        - **Swiss_Prot_2**: Another valid protein with two valid GO classes and one invalid.
+        - **Swiss_Prot_3**: Contains valid GO classes but has a sequence length > 1002.
+        - **Swiss_Prot_4**: Has valid GO classes but contains an invalid amino acid, 'X'.
+        - **Swiss_Prot_5**: Has a sequence but no GO classes associated.
+        - **Swiss_Prot_6**: Has GO classes without any associated evidence codes.
+        - **Swiss_Prot_7**: Has a GO class with an invalid evidence code.
+        - **Swiss_Prot_8**: Has a sequence length > 1002 and has only invalid GO class.
+        - **Swiss_Prot_9**: Has no GO classes but contains an invalid amino acid, 'X', in its sequence.
+        - **Swiss_Prot_10**: Has a valid GO class but lacks a sequence.
+        - **Swiss_Prot_11**: Has only Invalid GO class but lacks a sequence.
+
+        Note:
+        A valid GO label is the one which has one of the following evidence code
+        (EXP, IDA, IPI, IMP, IGI, IEP, TAS, IC).
 
         Returns:
             str: The raw UniProt data in string format.
@@ -650,6 +677,7 @@ class GOUniProtMockData(MockOntologyGraphData):
         protein_sq_1 = GOUniProtMockData.protein_sequences()["Swiss_Prot_1"]
         protein_sq_2 = GOUniProtMockData.protein_sequences()["Swiss_Prot_2"]
         raw_str = (
+            # Below protein with 3 valid associated GO class and one invalid GO class
             f"ID   Swiss_Prot_1              Reviewed;         {len(protein_sq_1)} AA. \n"
             "AC   Q6GZX4;\n"
             "DR   GO; GO:0000002; C:membrane; EXP:UniProtKB-KW.\n"
@@ -659,6 +687,7 @@ class GOUniProtMockData(MockOntologyGraphData):
             f"SQ   SEQUENCE   {len(protein_sq_1)} AA;  29735 MW;  B4840739BF7D4121 CRC64;\n"
             f"     {protein_sq_1}\n"
             "//\n"
+            # Below protein with 2 valid associated GO class and one invalid GO class
             f"ID   Swiss_Prot_2              Reviewed;         {len(protein_sq_2)} AA.\n"
             "AC   DCGZX4;\n"
             "DR   EMBL; AY548484; AAT09660.1; -; Genomic_DNA.\n"
@@ -668,34 +697,17 @@ class GOUniProtMockData(MockOntologyGraphData):
             f"SQ   SEQUENCE   {len(protein_sq_2)} AA;  29735 MW;  B4840739BF7D4121 CRC64;\n"
             f"     {protein_sq_2}\n"
             "//\n"
-            "ID   Swiss_Prot_3              Reviewed;         1165 AA.\n"
+            # Below protein with all valid associated GO class but sequence length greater than 1002
+            f"ID   Swiss_Prot_3              Reviewed;         {len(protein_sq_1 * 25)} AA.\n"
             "AC   Q6GZX4;\n"
             "DR   EMBL; AY548484; AAT09660.1; -; Genomic_DNA.\n"
             "DR   GO; GO:0000002; P:regulation of viral transcription; IEP:InterPro.\n"
             "DR   GO; GO:0000005; P:regulation of viral transcription; TAS:InterPro.\n"
             "DR   GO; GO:0000006; P:regulation of viral transcription; EXP:PomBase.\n"
-            "SQ   SEQUENCE   1165 AA;  129118 MW;  FE2984658CED53A8 CRC64;\n"
-            "     MRVVVNAKAL EVPVGMSFTE WTRTLSPGSS PRFLAWNPVR PRTFKDVTDP FWNGKVFDLL\n"
-            "     GVVNGKDDLL FPASEIQEWL EYAPNVDLAE LERIFVATHR HRGMMGFAAA VQDSLVHVDP\n"
-            "     DSVDVTRVKD GLHKELDEHA SKAAATDVRL KRLRSVKPVD GFSDPVLIRT VFSVTVPEFG\n"
-            "     DRTAYEIVDS AVPTGSCPYI SAGPFVKTIP GFKPAPEWPA QTAHAEGAVF FKADAEFPDT\n"
-            "     KPLKDMYRKY SGAAVVPGDV TYPAVITFDV PQGSRHVPPE DFAARVAESL SLDLRGRPLV\n"
-            "     EMGRVVSVRL DGMRFRPYVL TDLLVSDPDA SHVMQTDELN RAHKIKGTVY AQVCGTGQTV\n"
-            "     SFQEKTDEDS GEAYISLRVR ARDRKGVEEL MEAAGRVMAI YSRRESEIVS FYALYDKTVA\n"
-            "     KEAAPPRPPR KSKAPEPTGD KADRKLLRTL APDIFLPTYS RKCLHMPVIL RGAELEDARK\n"
-            "     KGLNLMDFPL FGESERLTYA CKHPQHPYPG LRANLLPNKA KYPFVPCCYS KDQAVRPNSK\n"
-            "     WTAYTTGNAE ARRQGRIREG VMQAEPLPEG ALIFLRRVLG QETGSKFFAL RTTGVPETPV\n"
-            "     NAVHVAVFQR SLTAEEQAEE RAAMALDPSA MGACAQELYV EPDVDWDRWR REMGDPNVPF\n"
-            "     NLLKYFRALE TRYDCDIYIM DNKGIIHTKA VRGRLRYRSR RPTVILHLRE ESCVPVMTPP\n"
-            "     SDWTRGPVRN GILTFSPIDP ITVKLHDLYQ DSRPVYVDGV RVPPLRSDWL PCSGQVVDRA\n"
-            "     GKARVFVVTP TGKMSRGSFT LVTWPMPPLA APILRTDTGF PRGRSDSPLS FLGSRFVPSG\n"
-            "     YRRSVETGAI REITGILDGA CEACLLTHDP VLVPDPSWSD GGPPVYEDPV PSRALEGFTG\n"
-            "     AEKKARMLVE YAKKAISIRE GSCTQESVRS FAANGGFVVS PGALDGMKVF NPRFEAPGPF\n"
-            "     AEADWAVKVP DVKTARRLVY ALRVASVNGT CPVQEYASAS LVPNFYKTST DFVQSPAYTI\n"
-            "     NVWRNDLDQS AVKKTRRAVV DWERGLAVPW PLPETELGFS YSLRFAGISR TFMAMNHPTW\n"
-            "     ESAAFAALTW AKSGYCPGVT SNQIPEGEKV PTYACVKGMK PAKVLESGDG TLKLDKSSYG\n"
-            "     DVRVSGVMIY RASEGKPMQY VSLLM\n"
+            f"SQ   SEQUENCE   {len(protein_sq_1 * 25)} AA;  129118 MW;  FE2984658CED53A8 CRC64;\n"
+            f"     {protein_sq_1 * 25}\n"
             "//\n"
+            # Below protein has valid go class association but invalid amino acid `X` in its sequence
             "ID   Swiss_Prot_4              Reviewed;         60 AA.\n"
             "AC   Q6GZX4;\n"
             "DR   EMBL; AY548484; AAT09660.1; -; Genomic_DNA.\n"
@@ -705,18 +717,54 @@ class GOUniProtMockData(MockOntologyGraphData):
             "SQ   SEQUENCE   60 AA;  29735 MW;  B4840739BF7D4121 CRC64;\n"
             "     XAFSAEDVLK EYDRRRRMEA LLLSLYYPND RKLLDYKEWS PPRVQVECPK APVEWNNPPS\n"
             "//\n"
+            # Below protein with sequence string but has no GO class
             "ID   Swiss_Prot_5              Reviewed;         60 AA.\n"
             "AC   Q6GZX4;\n"
             "DR   EMBL; AY548484; AAT09660.1; -; Genomic_DNA.\n"
             "SQ   SEQUENCE   60 AA;  29735 MW;  B4840739BF7D4121 CRC64;\n"
             "     MAFSAEDVLK EYDRRRRMEA LLLSLYYPND RKLLDYKEWS PPRVQVECPK APVEWNNPPS\n"
             "//\n"
-            "ID   Swiss_Prot_5              Reviewed;         60 AA.\n"
+            # Below protein with sequence string and with NO `valid` associated GO class (no evidence code)
+            "ID   Swiss_Prot_6              Reviewed;         60 AA.\n"
             "AC   Q6GZX4;\n"
-            "DR   GO; GO:0000005; P:regulation of viral transcription;\n"
+            "DR   GO; GO:0000023; P:regulation of viral transcription;\n"
             "SQ   SEQUENCE   60 AA;  29735 MW;  B4840739BF7D4121 CRC64;\n"
             "     MAFSAEDVLK EYDRRRRMEA LLLSLYYPND RKLLDYKEWS PPRVQVECPK APVEWNNPPS\n"
-            "//"
+            "//\n"
+            # Below protein with sequence string and with NO `valid` associated GO class (invalid evidence code)
+            "ID   Swiss_Prot_7              Reviewed;         60 AA.\n"
+            "AC   Q6GZX4;\n"
+            "DR   GO; GO:0000024; P:regulation of viral transcription; IEA:SGD.\n"
+            "SQ   SEQUENCE   60 AA;  29735 MW;  B4840739BF7D4121 CRC64;\n"
+            "     MAFSAEDVLK EYDRRRRMEA LLLSLYYPND RKLLDYKEWS PPRVQVECPK APVEWNNPPS\n"
+            "//\n"
+            # Below protein with sequence length greater than 1002 but with `Invalid` associated GO class
+            f"ID   Swiss_Prot_8              Reviewed;         {len(protein_sq_2 * 25)} AA.\n"
+            "AC   Q6GZX4;\n"
+            "DR   GO; GO:0000025; P:regulation of viral transcription; IC:Inferred.\n"
+            f"SQ   SEQUENCE   {len(protein_sq_2 * 25)} AA;  29735 MW;  B4840739BF7D4121 CRC64;\n"
+            f"     {protein_sq_2 * 25}\n"
+            "//\n"
+            # Below protein with sequence string but invalid amino acid `X` in its sequence
+            "ID   Swiss_Prot_9              Reviewed;         60 AA.\n"
+            "AC   Q6GZX4;\n"
+            "SQ   SEQUENCE   60 AA;  29735 MW;  B4840739BF7D4121 CRC64;\n"
+            "     XAFSAEDVLK EYDRRRRMEA LLLSLYYPND RKLLDYKEWS PPRVQVECPK APVEWNNPPS\n"
+            "//\n"
+            # Below protein with a `valid` associated GO class but without sequence string 
+            "ID   Swiss_Prot_10              Reviewed;         60 AA.\n"
+            "AC   Q6GZX4;\n"
+            "DR   GO; GO:0000027; P:regulation of viral transcription; EXP:InterPro.\n"
+            "SQ   SEQUENCE   60 AA;  29735 MW;  B4840739BF7D4121 CRC64;\n"
+            "     \n"  
+            "//\n"
+            # Below protein with a `Invalid` associated GO class but without sequence string 
+            "ID   Swiss_Prot_11              Reviewed;         60 AA.\n"
+            "AC   Q6GZX4;\n"
+            "DR   GO; GO:0000028; P:regulation of viral transcription; ND:NoData.\n"
+            "SQ   SEQUENCE   60 AA;  29735 MW;  B4840739BF7D4121 CRC64;\n"
+            "     \n"  
+            "//\n"
         )
 
         return raw_str
