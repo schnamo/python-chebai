@@ -66,6 +66,7 @@ class ImplicationLoss(torch.nn.Module):
             "sum", "max", "mean", "log-sum", "log-max", "log-mean"
         ] = "sum",
         multiply_with_base_loss: bool = True,
+        no_grads: bool = False,
     ):
         super().__init__()
         # automatically choose labeled subset for implication filter in case of mixed dataset
@@ -103,6 +104,7 @@ class ImplicationLoss(torch.nn.Module):
         self.start_at_epoch = start_at_epoch
         self.violations_per_cls_aggregator = violations_per_cls_aggregator
         self.multiply_with_base_loss = multiply_with_base_loss
+        self.no_grads = no_grads
 
     def _calculate_unaggregated_fuzzy_loss(
         self,
@@ -214,6 +216,8 @@ class ImplicationLoss(torch.nn.Module):
                 **kwargs,
             )
         )
+        if self.no_grads:
+            fuzzy_loss = fuzzy_loss.detach()
         loss_components["unweighted_fuzzy_loss"] = unweighted_fuzzy_mean
         loss_components["weighted_fuzzy_loss"] = weighted_fuzzy_mean
         if self.base_loss is None or target is None:
@@ -374,6 +378,8 @@ class DisjointLoss(ImplicationLoss):
                 **kwargs,
             )
         )
+        if self.no_grads:
+            impl_loss = impl_loss.detach()
         loss_components["unweighted_implication_loss"] = unweighted_impl_mean
         loss_components["weighted_implication_loss"] = weighted_impl_mean
 
@@ -388,6 +394,8 @@ class DisjointLoss(ImplicationLoss):
                 **kwargs,
             )
         )
+        if self.no_grads:
+            disj_loss = disj_loss.detach()
         loss_components["unweighted_disjointness_loss"] = unweighted_disj_mean
         loss_components["weighted_disjointness_loss"] = weighted_disj_mean
 
