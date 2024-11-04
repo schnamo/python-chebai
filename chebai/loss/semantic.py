@@ -62,7 +62,10 @@ class ImplicationLoss(torch.nn.Module):
         use_sigmoidal_implication: bool = False,
         weight_epoch_dependent: Union[bool | tuple[int, int]] = False,
         start_at_epoch: int = 0,
-        violations_per_cls_aggregator: Literal["sum", "max"] = "sum",
+        violations_per_cls_aggregator: Literal[
+            "sum", "max", "mean", "log-sum", "log-max", "log-mean"
+        ] = "sum",
+        multiply_with_base_loss: bool = True,
     ):
         super().__init__()
         # automatically choose labeled subset for implication filter in case of mixed dataset
@@ -99,6 +102,7 @@ class ImplicationLoss(torch.nn.Module):
         self.weight_epoch_dependent = weight_epoch_dependent
         self.start_at_epoch = start_at_epoch
         self.violations_per_cls_aggregator = violations_per_cls_aggregator
+        self.multiply_with_base_loss = multiply_with_base_loss
 
     def _calculate_unaggregated_fuzzy_loss(
         self,
@@ -133,10 +137,21 @@ class ImplicationLoss(torch.nn.Module):
         else:
             loss_impl_sum = loss_impl_l
 
-        if self.violations_per_cls_aggregator == "sum":
-            loss_by_cls = (loss_impl_sum).sum(dim=-1)
+        if self.violations_per_cls_aggregator.startswith("log-"):
+            loss_impl_sum = -torch.log(1 - loss_impl_sum)
+            violations_per_cls_aggregator = self.violations_per_cls_aggregator[4:]
         else:
-            loss_by_cls = torch.max(loss_impl_sum, dim=-1).values
+            violations_per_cls_aggregator = self.violations_per_cls_aggregator
+        if violations_per_cls_aggregator == "sum":
+            loss_by_cls = loss_impl_sum.sum(dim=-1)
+        elif violations_per_cls_aggregator == "max":
+            loss_by_cls = loss_impl_sum.max(dim=-1).values
+        elif violations_per_cls_aggregator == "mean":
+            loss_by_cls = loss_impl_sum.mean(dim=-1)
+        else:
+            raise NotImplementedError(
+                f"Unknown violations_per_cls_aggregator {self.violations_per_cls_aggregator}"
+            )
 
         unweighted_mean = loss_by_cls.mean()
         implication_loss_weighted = loss_by_cls
@@ -203,8 +218,10 @@ class ImplicationLoss(torch.nn.Module):
         loss_components["weighted_fuzzy_loss"] = weighted_fuzzy_mean
         if self.base_loss is None or target is None:
             total_loss = self.impl_weight * fuzzy_loss
-        else:
+        elif self.multiply_with_base_loss:
             total_loss = base_loss * (1 + self.impl_weight * fuzzy_loss)
+        else:
+            total_loss = base_loss + self.impl_weight * fuzzy_loss
         return total_loss.mean(), loss_components
 
     def _calculate_implication_loss(
@@ -376,9 +393,15 @@ class DisjointLoss(ImplicationLoss):
 
         if self.base_loss is None or target is None:
             total_loss = self.impl_weight * impl_loss + self.disjoint_weight * disj_loss
-        else:
+        elif self.multiply_with_base_loss:
             total_loss = base_loss * (
                 1 + self.impl_weight * impl_loss + self.disjoint_weight * disj_loss
+            )
+        else:
+            total_loss = (
+                base_loss
+                + self.impl_weight * impl_loss
+                + self.disjoint_weight * disj_loss
             )
         return total_loss.mean(), loss_components
 
@@ -476,8 +499,14 @@ if __name__ == "__main__":
         impl_loss_weight=1,
         disjoint_loss_weight=1,
     )
-    # lm = loss(torch.randn(10, 997), torch.randint(0, 2, (10, 997)))
-    # print(lm)
+    random_preds = torch.randn(10, 997)
+    random_labels = torch.randint(0, 2, (10, 997))
+    for agg in ["sum", "max", "mean", "log-mean"]:
+        loss.violations_per_cls_aggregator = agg
+        l = loss(random_preds, random_labels)
+        print(f"Loss with {agg} aggregation for random input:", l)
+
+    # simplified example for ontology with 4 classes, A -> B, B -> C, D -> C, B and D disjoint
     loss.implication_filter_l = torch.tensor(
         [[0, 1, 1, 0], [0, 0, 1, 0], [0, 0, 0, 0], [0, 0, 1, 0]]
     )
@@ -486,9 +515,10 @@ if __name__ == "__main__":
         [[0, 0, 0, 0], [0, 0, 0, 1], [0, 0, 0, 0], [0, 1, 0, 0]]
     )
     loss.disjoint_filter_r = loss.disjoint_filter_l.transpose(0, 1)
+    # expected result: first sample: moderately high loss for B disj D, otherwise low, second sample: high loss for A -> B (applied to A), otherwise low
     preds = torch.tensor([[0.1, 0.3, 0.7, 0.4], [0.5, 0.2, 0.9, 0.1]])
     labels = [[0, 1, 1, 0], [0, 0, 1, 1]]
-    lm = loss(preds, torch.tensor(labels))
-    print(lm)
-    print()
-    # todo
+    for agg in ["sum", "max", "mean", "log-mean"]:
+        loss.violations_per_cls_aggregator = agg
+        l = loss(preds, torch.tensor(labels))
+        print(f"Loss with {agg} aggregation for simple input:", l)
