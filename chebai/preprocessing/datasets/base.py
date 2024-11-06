@@ -135,9 +135,14 @@ class XYBaseDataModule(LightningDataModule):
         return os.path.join("data", self._name)
 
     @property
+    def processed_dir_main(self) -> str:
+        """Name of the directory where processed (but not tokenized) data is stored."""
+        return os.path.join(self.base_dir, "processed")
+
+    @property
     def processed_dir(self) -> str:
-        """Name of the directory where the processed data is stored."""
-        return os.path.join(self.base_dir, "processed", *self.identifier)
+        """Name of the directory where the processed and tokenized data is stored."""
+        return os.path.join(self.processed_dir_main, *self.identifier)
 
     @property
     def raw_dir(self) -> str:
@@ -1131,19 +1136,6 @@ class _DynamicDataset(XYBaseDataModule, ABC):
             self.base_dir,
             self._name,
             "processed",
-        )
-
-    @property
-    def processed_dir(self) -> str:
-        """
-        Returns the specific directory path for processed data, including identifiers.
-
-        Returns:
-            str: The path to the processed data directory, including additional identifiers.
-        """
-        return os.path.join(
-            self.processed_dir_main,
-            *self.identifier,
         )
 
     @property
