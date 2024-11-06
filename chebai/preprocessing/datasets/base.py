@@ -394,7 +394,7 @@ class XYBaseDataModule(LightningDataModule):
         raise NotImplementedError
 
     @property
-    def processed_dir_main_file_names_dict(self) -> dict:
+    def processed_main_file_names_dict(self) -> dict:
         """
         Returns a dictionary mapping processed data file names.
 
@@ -405,14 +405,14 @@ class XYBaseDataModule(LightningDataModule):
         raise NotImplementedError
 
     @property
-    def processed_dir_main_file_names(self) -> List[str]:
+    def processed_main_file_names(self) -> List[str]:
         """
         Returns a list of file names for processed data (before tokenization).
 
         Returns:
             List[str]: A list of file names corresponding to the processed data.
         """
-        return list(self.processed_dir_main_file_names_dict.values())
+        return list(self.processed_main_file_names_dict.values())
 
     @property
     def processed_file_names_dict(self) -> dict:
@@ -721,7 +721,7 @@ class _DynamicDataset(XYBaseDataModule, ABC):
         """
         print("Checking for processed data in", self.processed_dir_main)
 
-        processed_name = self.processed_dir_main_file_names_dict["data"]
+        processed_name = self.processed_main_file_names_dict["data"]
         if not os.path.isfile(os.path.join(self.processed_dir_main, processed_name)):
             print("Missing processed data file (`data.pkl` file)")
             os.makedirs(self.processed_dir_main, exist_ok=True)
@@ -812,7 +812,7 @@ class _DynamicDataset(XYBaseDataModule, ABC):
             self._load_data_from_file(
                 os.path.join(
                     self.processed_dir_main,
-                    self.processed_dir_main_file_names_dict["data"],
+                    self.processed_main_file_names_dict["data"],
                 )
             ),
             os.path.join(self.processed_dir, self.processed_file_names_dict["data"]),
@@ -1147,7 +1147,7 @@ class _DynamicDataset(XYBaseDataModule, ABC):
         )
 
     @property
-    def processed_dir_main_file_names_dict(self) -> dict:
+    def processed_main_file_names_dict(self) -> dict:
         """
         Returns a dictionary mapping processed data file names.
 
