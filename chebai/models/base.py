@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, Iterable
 
 import torch
 from lightning.pytorch.core.module import LightningModule
@@ -41,12 +41,15 @@ class ChebaiBaseNet(LightningModule):
         test_metrics: Optional[torch.nn.Module] = None,
         pass_loss_kwargs: bool = True,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
+        exclude_hyperparameter_logging: Optional[Iterable[str]] = None,
         **kwargs,
     ):
         super().__init__()
+        if exclude_hyperparameter_logging is None:
+            exclude_hyperparameter_logging = tuple()
         self.criterion = criterion
         self.save_hyperparameters(
-            ignore=["criterion", "train_metrics", "val_metrics", "test_metrics"]
+            ignore=["criterion", "train_metrics", "val_metrics", "test_metrics", *exclude_hyperparameter_logging]
         )
         self.out_dim = out_dim
         if optimizer_kwargs:
