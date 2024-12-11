@@ -49,7 +49,13 @@ class ChebaiBaseNet(LightningModule):
             exclude_hyperparameter_logging = tuple()
         self.criterion = criterion
         self.save_hyperparameters(
-            ignore=["criterion", "train_metrics", "val_metrics", "test_metrics", *exclude_hyperparameter_logging]
+            ignore=[
+                "criterion",
+                "train_metrics",
+                "val_metrics",
+                "test_metrics",
+                *exclude_hyperparameter_logging,
+            ]
         )
         self.out_dim = out_dim
         if optimizer_kwargs:
