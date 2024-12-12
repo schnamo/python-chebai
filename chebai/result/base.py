@@ -1,6 +1,6 @@
-from typing import Iterable
 import abc
 import multiprocessing as mp
+from typing import Iterable
 
 import torch
 import tqdm
@@ -45,7 +45,7 @@ class ResultFactory(abc.ABC):
 
     def _generate_predictions(self, data_path, raw=False, **kwargs):
         self._model.eval()
-        collate = self._reader.COLLATER()
+        collate = self._reader.COLLATOR()
         if raw:
             data_tuples = [
                 (x["features"], x["ident"], self._reader.to_data(self._process_row(x)))
@@ -54,7 +54,7 @@ class ResultFactory(abc.ABC):
         else:
             data_tuples = [
                 (x.get("raw_features", x["ident"]), x["ident"], x)
-                for x in torch.load(data_path)
+                for x in torch.load(data_path, weights_only=False)
             ]
 
         for raw_features, ident, row in tqdm.tqdm(data_tuples):

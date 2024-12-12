@@ -6,9 +6,9 @@ import seaborn as sns
 import torch
 import tqdm
 
+import chebai.models.electra as electra
 from chebai.loss.pretraining import ElectraPreLoss
 from chebai.result.base import ResultProcessor
-import chebai.models.electra as electra
 
 
 def visualise_loss(logs_path):
@@ -31,10 +31,10 @@ def evaluate_model(logs_base_path, model_filename, data_module):
         )
     )
     assert isinstance(model, electra.ElectraPre)
-    collate = data_module.reader.COLLATER()
+    collate = data_module.reader.COLLATOR()
     test_file = "test.pt"
     data_path = os.path.join(data_module.processed_dir, test_file)
-    data_list = torch.load(data_path)
+    data_list = torch.load(data_path, weights_only=False)
     preds_list = []
     labels_list = []
 
