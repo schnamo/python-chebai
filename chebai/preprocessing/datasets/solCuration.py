@@ -127,15 +127,17 @@ class SolCuration(XYBaseDataModule):
             reader = csv.DictReader(input_file)
             for row in reader:
                 smiles_l.append(row["smiles"])
-                labels_l.append([float(row["logS"])])
+                labels_l.append(float(row["logS"]))
                 # labels_l.append(np.floor(float(row["logS"])))
             # onehotencoding
             # label_binarizer = LabelBinarizer()
             # label_binarizer.fit(labels_l)
             # onehot_label_l = label_binarizer.transform(labels_l)
-            for i in range(0,len(smiles_l)):
-                # dataset has no mol_id TODO
-                yield dict(features=smiles_l[i], labels=labels_l[i], ident=i) #, ident=row["mol_id"]
+
+        # normalise data to be between 0 and 1
+        labels_norm = [(float(label)-min(labels_l))/(max(labels_l)-min(labels_l)) for label in labels_l]
+        for i in range(0,len(smiles_l)):
+            yield dict(features=smiles_l[i], labels=[labels_l[i]], ident=i)
 
 class SolubilityCuratedData(SolCuration):
     READER = dr.ChemDataReader
