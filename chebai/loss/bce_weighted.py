@@ -50,9 +50,9 @@ class BCEWeighted(torch.nn.BCEWithLogitsLoss):
             and self.data_extractor is not None
             and all(
                 os.path.exists(
-                    os.path.join(self.data_extractor.processed_dir_main, raw_file)
+                    os.path.join(self.data_extractor.processed_dir_main, file_name)
                 )
-                for raw_file in self.data_extractor.raw_file_names
+                for file_name in self.data_extractor.processed_main_file_names
             )
             and self.pos_weight is None
         ):
@@ -65,12 +65,12 @@ class BCEWeighted(torch.nn.BCEWithLogitsLoss):
                         open(
                             os.path.join(
                                 self.data_extractor.processed_dir_main,
-                                raw_file_name,
+                                file_name,
                             ),
                             "rb",
                         )
                     )
-                    for raw_file_name in self.data_extractor.raw_file_names
+                    for file_name in self.data_extractor.processed_main_file_names
                 ]
             )
             value_counts = []
