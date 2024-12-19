@@ -177,7 +177,8 @@ class XYBaseDataModule(LightningDataModule):
         self, kind: Optional[str] = None, filename: Optional[str] = None
     ) -> List:
         """
-        Load processed data from a file.
+        Load processed data from a file. Either the kind or the filename has to be provided. If both are provided, the
+        filename is used.
 
         Args:
             kind (str, optional): The kind of dataset to load such as "train", "val" or "test". Defaults to None.
@@ -1146,6 +1147,16 @@ class _DynamicDataset(XYBaseDataModule, ABC):
                   For example, {"data": "data.pkl"}.
         """
         return {"data": "data.pkl"}
+
+    @property
+    def raw_file_names(self) -> List[str]:
+        """
+        Returns a list of raw file names.
+
+        Returns:
+            List[str]: A list of file names corresponding to the raw data.
+        """
+        return list(self.raw_file_names_dict.values())
 
     @property
     def processed_file_names_dict(self) -> dict:
