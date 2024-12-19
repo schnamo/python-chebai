@@ -132,6 +132,7 @@ def _execute(
     - train_running_loss (float): Average loss over the data.
     - f1 (float): Average F1 score over the data.
     """
+
     train_running_loss = 0.0
     data_size = 0
     f1 = 0
