@@ -42,6 +42,7 @@ class ChebaiBaseNet(LightningModule):
         pass_loss_kwargs: bool = True,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
         exclude_hyperparameter_logging: Optional[Iterable[str]] = None,
+        # model_type: Optional[str] = 'classification',
         **kwargs,
     ):
         super().__init__()
@@ -66,6 +67,7 @@ class ChebaiBaseNet(LightningModule):
         self.validation_metrics = val_metrics
         self.test_metrics = test_metrics
         self.pass_loss_kwargs = pass_loss_kwargs
+        # self.model_type = model_type
 
     def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         # avoid errors due to unexpected keys (e.g., if loading checkpoint from a bce model and using it with a

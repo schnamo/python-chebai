@@ -231,7 +231,7 @@ class Electra(ChebaiBaseNet):
         config: Optional[Dict[str, Any]] = None,
         pretrained_checkpoint: Optional[str] = None,
         load_prefix: Optional[str] = None,
-        model_type='classification',
+        model_type='classification', # todo add optional
         **kwargs: Any,
     ):
         # Remove this property in order to prevent it from being stored as a
@@ -297,7 +297,7 @@ class Electra(ChebaiBaseNet):
         self, data: Dict[str, Any], labels: Tensor, model_output: Dict[str, Tensor]
     ) -> Tuple[Tensor, Tensor]:
         """
-        Get the predictions and labels from the model output. Applies a sigmoid to the model output.
+        Get the predictions and labels from the model output. Applies a sigmoid to the model output if classification task is given.
 
         Args:
             data (Dict[str, Any]): The input data.

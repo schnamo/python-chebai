@@ -132,6 +132,8 @@ class SolCuration(XYBaseDataModule):
         """
         smiles_l = []
         labels_l = []
+        print('READING IN DATA: ', input_file_path)
+        # print('MODEL: ', self.model_type)
         with open(input_file_path, "r") as input_file:
             reader = csv.DictReader(input_file)
             for row in reader:
@@ -144,7 +146,7 @@ class SolCuration(XYBaseDataModule):
             # onehot_label_l = label_binarizer.transform(labels_l)
 
         # normalise data to be between 0 and 1
-        labels_norm = [(float(label)-min(labels_l))/(max(labels_l)-min(labels_l)) for label in labels_l]
+        # labels_norm = [(float(label)-min(labels_l))/(max(labels_l)-min(labels_l)) for label in labels_l]
         for i in range(0,len(smiles_l)):
             yield dict(features=smiles_l[i], labels=[labels_l[i]], ident=i)
 

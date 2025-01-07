@@ -79,6 +79,7 @@ class XYBaseDataModule(LightningDataModule):
         inner_k_folds: int = -1,  # use inner cross-validation if > 1
         fold_index: Optional[int] = None,
         base_dir: Optional[str] = None,
+        # model_type: Optional[str] =  'classification',
         **kwargs,
     ):
         super().__init__()
@@ -116,6 +117,7 @@ class XYBaseDataModule(LightningDataModule):
             os.makedirs(os.path.join(self.raw_dir, self.fold_dir), exist_ok=True)
             os.makedirs(os.path.join(self.processed_dir, self.fold_dir), exist_ok=True)
         self.save_hyperparameters()
+        # self.model_type = model_type
 
     @property
     def identifier(self) -> tuple:
