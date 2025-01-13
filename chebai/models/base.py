@@ -44,7 +44,8 @@ class ChebaiBaseNet(LightningModule):
         exclude_hyperparameter_logging: Optional[Iterable[str]] = None,
         **kwargs,
     ):
-        super().__init__()
+        super().__init__(**kwargs)
+        # super().__init__()
         if exclude_hyperparameter_logging is None:
             exclude_hyperparameter_logging = tuple()
         self.criterion = criterion
