@@ -315,7 +315,7 @@ class Electra(ChebaiBaseNet):
         if self.model_type == 'classification':
             return torch.sigmoid(d), labels.int() if labels is not None else None
         elif self.model_type == 'regression':
-            return d, labels if labels is not None else None
+            return d, labels
         else:
             raise ValueError('Please specify a valid model type in your model config.')
 

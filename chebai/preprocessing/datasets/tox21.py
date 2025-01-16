@@ -145,7 +145,7 @@ class Tox21MolNet(XYBaseDataModule):
                 labels = [
                     bool(int(l)) if l else None for l in (row[k] for k in self.HEADERS)
                 ]
-                yield dict(features=smiles, labels=labels, ident=row["mol_id"])
+                yield self.reader.to_data(dict(features=smiles, labels=labels, ident=row["mol_id"]))
 
 
 class Tox21Challenge(XYBaseDataModule):

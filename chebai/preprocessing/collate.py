@@ -106,7 +106,7 @@ class RaggedCollator(Collator):
         lens = torch.tensor(list(map(len, x)))
         model_kwargs["mask"] = torch.arange(max(lens))[None, :] < lens[:, None]
         model_kwargs["lens"] = lens
-
+        
         return XYData(
             pad_sequence([torch.tensor(a) for a in x], batch_first=True),
             y,

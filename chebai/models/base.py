@@ -246,6 +246,7 @@ class ChebaiBaseNet(LightningModule):
                 loss_kwargs = dict()
                 if self.pass_loss_kwargs:
                     loss_kwargs = loss_kwargs_candidates
+                # todo: check here too    
                 loss = self.criterion(loss_data, loss_labels, **loss_kwargs)
                 if isinstance(loss, tuple):
                     loss_additional = loss[1:]
