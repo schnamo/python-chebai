@@ -289,9 +289,13 @@ class Electra(ChebaiBaseNet):
             tuple: A tuple containing the processed model output, labels, and loss arguments.
         """
         kwargs_copy = dict(loss_kwargs)
+        output = model_output["logits"]
         if labels is not None:
             labels = labels.float()
-        return model_output["logits"], labels, kwargs_copy
+        if "missing_labels" in kwargs_copy:
+            missing_labels = kwargs_copy.pop("missing_labels")
+            output = output * (~missing_labels).int()
+        return output, labels, kwargs_copy
 
     def _get_prediction_and_labels(
         self, data: Dict[str, Any], labels: Tensor, model_output: Dict[str, Tensor]
@@ -313,11 +317,16 @@ class Electra(ChebaiBaseNet):
             n = loss_kwargs["non_null_labels"]
             d = d[n]
         if self.model_type == 'classification':
+            if "missing_labels" in loss_kwargs:
+                missing_labels = loss_kwargs["missing_labels"]
+                labels = labels * (~missing_labels).int()
+
             return torch.sigmoid(d), labels.int() if labels is not None else None
         elif self.model_type == 'regression':
             return d, labels
         else:
             raise ValueError('Please specify a valid model type in your model config.')
+
 
     def forward(self, data: Dict[str, Tensor], **kwargs: Any) -> Dict[str, Any]:
         """
