@@ -69,11 +69,8 @@ class Tox21MolNet(XYBaseDataModule):
         """Processes and splits the dataset."""
         print("Create splits")
         data = list(self._load_data_from_file(os.path.join(self.raw_dir, f"tox21.csv")))
-<<<<<<< HEAD
-        groups = np.array([d["group"] for d in data])
-=======
         groups = np.array([d.get("group") for d in data])
->>>>>>> b537b7fd776e6afc535e05a111a0bc6a493ec8e9
+
         if not all(g is None for g in groups):
             split_size = int(len(set(groups)) * self.train_split)
             os.makedirs(self.processed_dir, exist_ok=True)
