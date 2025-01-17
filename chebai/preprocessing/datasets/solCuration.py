@@ -131,7 +131,7 @@ class SolESOL(XYBaseDataModule):
 
     @property
     def _name(self):
-        return "SolCuration"
+        return "SolESOL"
 
     @property
     def label_number(self):
@@ -139,28 +139,22 @@ class SolESOL(XYBaseDataModule):
 
     @property
     def raw_file_names(self):
-        return ["solCuration.csv"]
+        return ["solESOL.csv"]
 
     @property
     def processed_file_names(self):
         return ["test.pt", "train.pt", "validation.pt"]
 
     def download(self):
-        # download and combine all the available curated datasets from xxx
-        db_sol = ['aqsol','aqua','esol','ochem','phys']
-        with open(os.path.join(self.raw_dir, "solCuration.csv"), "ab") as dst:
-            for i, db in enumerate(db_sol):
-                with request.urlopen(f"https://raw.githubusercontent.com/Mengjintao/SolCuration/master/cure/{db}_cure.csv",) as src:
-                    if i > 0:
-                        src.readline()
-                    shutil.copyfileobj(src, dst)
+        # download 
+        with open(os.path.join(self.raw_dir, "solESOL.csv"), "ab") as dst:
+            with request.urlopen(f"https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/delaney-processed.csv",) as src:
+                shutil.copyfileobj(src, dst)
              
 
     def setup_processed(self):
         print("Create splits")
-        print(self.train_split)
-        print(os.path.join(self.raw_dir, f"solCuration.csv"))
-        data = list(self._load_data_from_file(os.path.join(self.raw_dir, f"solCuration.csv")))
+        data = list(self._load_data_from_file(os.path.join(self.raw_dir, f"solESOL.csv")))
         print(len(data))
         # data = self._load_data_from_file(os.path.join(self.raw_dir, f"solCuration.csv"))
         if 0 == 0:
@@ -210,10 +204,10 @@ class SolESOL(XYBaseDataModule):
         labels_l = []
         with open(input_file_path, "r") as input_file:
             reader = csv.DictReader(input_file)
+            print(reader.fieldnames)
             for row in reader:
-                if not row["smiles"] in smiles_l:
-                    smiles_l.append(row["smiles"])
-                    labels_l.append(float(row["logS"]))
+                smiles_l.append(row["smiles"])
+                labels_l.append(float(row["measured log solubility in mols per litre"]))
 
         for i in range(0,len(smiles_l)):
             yield self.reader.to_data(dict(features=smiles_l[i], labels=[labels_l[i]], ident=i))
