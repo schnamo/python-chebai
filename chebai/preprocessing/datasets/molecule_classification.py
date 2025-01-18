@@ -93,7 +93,21 @@ class ClinTox(XYBaseDataModule):
                 if d["original"]
             ]
         else:
- 
+            print(self.train_split)
+            print(type(data))
+            print((data[0]))
+            print(type(data[0]))
+            X = []
+            y = []
+            for item in data:
+                X.append(item['ident'])
+                y.append(item['labels'])
+            sss = StratifiedShuffleSplit(n_splits=10, test_size=1-self.train_split, random_state=0)
+            sss.get_n_splits(np.array(X), np.array(y))
+            print(sss)
+            train, test = sss.split(X, y)
+            print(train)
+            exit()
             train_split, test_split = train_test_split(
                 data, train_size=self.train_split, shuffle=True
             )
@@ -124,7 +138,7 @@ class ClinTox(XYBaseDataModule):
         ):
             self.setup_processed()
 
-    def _load_data_from_file(self, input_file_path: str) -> List[Dict]:
+    def _load_dict(self, input_file_path: str) -> List[Dict]:
         """Loads data from a CSV file.
 
         Args:
@@ -142,7 +156,104 @@ class ClinTox(XYBaseDataModule):
                 labels = [
                     bool(int(l)) if l else None for l in (row[k] for k in self.HEADERS)
                 ]
-                yield self.reader.to_data(dict(features=smiles, labels=labels, ident=i))
+                yield dict(features=smiles, labels=labels, ident=i)
+                # yield self.reader.to_data(dict(features=smiles, labels=labels, ident=i))
+
+
+class BBBP(XYBaseDataModule):
+    """Data module for ClinTox MoleculeNet dataset."""
+
+    HEADERS = [
+        "p_np",
+    ]
+
+    @property
+    def _name(self) -> str:
+        """Returns the name of the dataset."""
+        return "BBBP"
+
+    @property
+    def label_number(self) -> int:
+        """Returns the number of labels."""
+        return 1
+
+    @property
+    def raw_file_names(self) -> List[str]:
+        """Returns a list of raw file names."""
+        return ["bbbp.csv"]
+
+    @property
+    def processed_file_names(self) -> List[str]:
+        """Returns a list of processed file names."""
+        return ["test.pt", "train.pt", "validation.pt"]
+
+    def download(self) -> None:
+        
+        """Downloads and extracts the dataset."""
+        with open(os.path.join(self.raw_dir, "bbbp.csv"), "ab") as dst:
+            with request.urlopen(f"https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/BBBP.csv",) as src:
+                shutil.copyfileobj(src, dst)
+
+
+    def setup_processed(self) -> None:
+        """Processes and splits the dataset."""
+        print("Create splits")
+        data = list(self._load_data_from_file(os.path.join(self.raw_dir, f"bbbp.csv")))
+
+        train_split, test_split = train_test_split(
+                data, train_size=self.train_split, shuffle=True
+            )
+        test_split, validation_split = train_test_split(
+                test_split, train_size=0.5, shuffle=True
+            )
+        for k, split in [
+            ("test", test_split),
+            ("train", train_split),
+            ("validation", validation_split),
+        ]:
+            print("transform", k)
+            torch.save(
+                split,
+                os.path.join(self.processed_dir, f"{k}.pt"),
+            )
+
+    def setup(self, **kwargs) -> None:
+        """Sets up the dataset by downloading and processing if necessary."""
+        if any(
+            not os.path.isfile(os.path.join(self.raw_dir, f))
+            for f in self.raw_file_names
+        ):
+            self.download()
+        if any(
+            not os.path.isfile(os.path.join(self.processed_dir, f))
+            for f in self.processed_file_names
+        ):
+            self.setup_processed()
+
+    def _load_dict(self, input_file_path: str) -> List[Dict]:
+        """Loads data from a CSV file.
+
+        Args:
+            input_file_path (str): Path to the CSV file.
+
+        Returns:
+            List[Dict]: List of data dictionaries.
+        """
+        i = 0
+        with open(input_file_path, "r") as input_file:
+            reader = csv.DictReader(input_file)
+            for row in reader:
+                i += 1
+                smiles = row["smiles"]
+                labels = [int(row["p_np"])]
+                yield dict(features=smiles, labels=labels, ident=i)
+                # yield self.reader.to_data(dict(features=smiles, labels=labels, ident=i))
+
+
+class BBBPChem(BBBP):
+    """Chemical data reader for Tox21MolNet dataset."""
+
+    READER = dr.ChemDataReader
 
 
 class ClinToxChem(ClinTox):

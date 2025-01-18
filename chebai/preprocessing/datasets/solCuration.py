@@ -210,7 +210,8 @@ class SolESOL(XYBaseDataModule):
                 labels_l.append(float(row["measured log solubility in mols per litre"]))
 
         for i in range(0,len(smiles_l)):
-            yield self.reader.to_data(dict(features=smiles_l[i], labels=[labels_l[i]], ident=i))
+            yield dict(features=smiles_l[i], labels=[labels_l[i]], ident=i)
+            # yield self.reader.to_data(dict(features=smiles_l[i], labels=[labels_l[i]], ident=i))
 
 
 class SolCurationChem(SolCuration):

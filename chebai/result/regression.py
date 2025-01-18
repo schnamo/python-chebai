@@ -34,7 +34,7 @@ from chebai.result.utils import *
 #     plt.show()
 
 
-def print_metrics(
+def metrics_regression(
     preds: Tensor,
     labels: Tensor,
     device: torch.device,

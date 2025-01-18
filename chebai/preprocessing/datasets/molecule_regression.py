@@ -105,7 +105,8 @@ class Lipo(XYBaseDataModule):
                 labels_l.append(float(row["exp"]))
 
         for i in range(0,len(smiles_l)):
-            yield self.reader.to_data(dict(features=smiles_l[i], labels=[labels_l[i]], ident=i))
+            yield dict(features=smiles_l[i], labels=[labels_l[i]], ident=i)
+            # yield self.reader.to_data(dict(features=smiles_l[i], labels=[labels_l[i]], ident=i))
 
 
 class FreeSolv(XYBaseDataModule):
@@ -193,7 +194,8 @@ class FreeSolv(XYBaseDataModule):
                 labels_l.append(float(row["expt"]))
 
         for i in range(0,len(smiles_l)):
-            yield self.reader.to_data(dict(features=smiles_l[i], labels=[labels_l[i]], ident=i))
+            yield dict(features=smiles_l[i], labels=[labels_l[i]], ident=i)
+            # yield self.reader.to_data(dict(features=smiles_l[i], labels=[labels_l[i]], ident=i))
 
 
 class LipoChem(Lipo):
