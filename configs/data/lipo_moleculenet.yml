@@ -1,0 +1,3 @@
+class_path: chebai.preprocessing.datasets.molecule_regression.LipoChem
+init_args:
+  batch_size: 32

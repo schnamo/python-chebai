@@ -55,10 +55,11 @@ def print_metrics(
     mse = MeanSquaredError()
     mse = mse.to(labels.device)
     
-    # my_f1_macro = MacroF1(preds.shape[1]).to(device=device)
-    # my_bal_acc = BalancedAccuracy(preds.shape[1]).to(device=device)
+    rmse = MeanSquaredError(squared = False)
+    rmse = rmse.to(labels.device)
 
-    print(f"MSE: {mse(preds, labels)}")
+    return(mse(preds, labels), rmse(preds, labels))
+
     # print(f"Micro-F1: {f1_micro(preds, labels):3f}")
     # print(f"Balanced Accuracy: {my_bal_acc(preds, labels):3f}")
   

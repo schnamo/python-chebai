@@ -10,7 +10,7 @@ from urllib import request
 import numpy as np
 import torch
 from rdkit import Chem
-from sklearn.model_selection import GroupShuffleSplit, train_test_split
+from sklearn.model_selection import GroupShuffleSplit, train_test_split, StratifiedShuffleSplit
 
 from chebai.preprocessing import reader as dr
 from chebai.preprocessing.datasets.base import XYBaseDataModule
@@ -100,10 +100,13 @@ class Tox21MolNet(XYBaseDataModule):
                 if d["original"]
             ]
         else:
-            train_split, test_split = train_test_split(
-                data, train_size=self.train_split, shuffle=True
-            )
-            test_split, validation_split = train_test_split(
+            print(self.train_split)
+            sss = StratifiedShuffleSplit(n_splits=5, test_size=1-self.train_split, random_state=0)
+            train_split, test_split =  sss.get_n_splits(data)
+            # train_split, test_split = StratifiedShuffleSplit(
+            #     data, train_size=self.train_split, shuffle=True
+            # )
+            test_split, validation_split = StratifiedShuffleSplit(
                 test_split, train_size=0.5, shuffle=True
             )
         for k, split in [
@@ -146,7 +149,8 @@ class Tox21MolNet(XYBaseDataModule):
                 labels = [
                     bool(int(l)) if l else None for l in (row[k] for k in self.HEADERS)
                 ]
-                yield self.reader.to_data(dict(features=smiles, labels=labels, ident=row["mol_id"]))
+                yield dict(features=smiles, labels=labels, ident=row["mol_id"])
+                # yield self.reader.to_data(dict(features=smiles, labels=labels, ident=row["mol_id"]))
 
 
 class Tox21Challenge(XYBaseDataModule):
