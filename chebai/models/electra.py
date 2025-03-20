@@ -332,7 +332,8 @@ class Electra(ChebaiBaseNet):
                 #print('bla')
                 missing_labels = loss_kwargs["missing_labels"]
                 d[missing_labels] = 0
-            return d, labels.int() if labels is not None else None
+            has_positive_entries = torch.sum(labels, dim=-1)>0
+            return d[has_positive_entries], labels[has_positive_entries].int() if labels[has_positive_entries] is not None else None
         elif self.model_type == 'regression':
             return d, labels
         else:
