@@ -299,8 +299,7 @@ class Electra(ChebaiBaseNet):
             labels = labels.float()
         if "missing_labels" in kwargs_copy:
             missing_labels = kwargs_copy.pop("missing_labels")
-            output = output * (~missing_labels).int() - 10000 * missing_labels.int()
-            labels = labels * (~missing_labels).int()
+            output[missing_labels] = -1e8
         if self.model_type == "classification":
             assert ((labels <= torch.tensor(1.0)) & (labels >= torch.tensor(0.0))).all()
         return output, labels, kwargs_copy
@@ -332,7 +331,7 @@ class Electra(ChebaiBaseNet):
             if "missing_labels" in loss_kwargs:
                 #print('bla')
                 missing_labels = loss_kwargs["missing_labels"]
-                d = d * (~missing_labels).int().to(device=d.device)
+                d[missing_labels] = 0
             return d, labels.int() if labels is not None else None
         elif self.model_type == 'regression':
             return d, labels
