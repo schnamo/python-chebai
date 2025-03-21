@@ -303,7 +303,7 @@ class ChebaiBaseNet(LightningModule):
                     logger=True,
                     sync_dist=sync_dist,
                 )
-            if metrics and labels is not None:
+            if metrics and labels is not None and pr is not None:
                 for metric_name, metric in metrics.items():
                     metric.update(pr, tar)
                 self._log_metrics(prefix, metrics, len(batch))
